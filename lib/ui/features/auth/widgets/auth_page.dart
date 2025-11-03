@@ -5,55 +5,76 @@ import 'package:provider/provider.dart';
 import '../viewmodels/auth_view_model.dart';
 
 /// Login page widget following MVVM pattern
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Consumer<AuthViewModel>(
-          builder: (context, authViewModel, child) {
-            return Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _AppLogo(),
+        child: SingleChildScrollView(
+          child: Consumer<AuthViewModel>(
+            builder: (context, authViewModel, child) {
+              return Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const _AppLogo(),
 
-                  const SizedBox(height: 48),
+                    const SizedBox(height: 48),
 
-                  const _WelcomeText(),
+                    const _WelcomeText(),
 
-                  const SizedBox(height: 48),
-                  _LoginAndPassword(),
-                  const SizedBox(height: 48),
-
-                  // Google Sign In Button
-                  _GoogleSignInButton(
-                    onPressed: authViewModel.isLoading
-                        ? null
-                        : () => authViewModel.signInWithGoogle(),
-                    isLoading: authViewModel.isLoading,
-                  ),
-
-                  const SizedBox(height: 24),
-                  _ConfirmButton(
-                    onPressed: () {},
-                  ),
-
-                  // Error Message
-                  if (authViewModel.hasError)
-                    _ErrorMessage(
-                      message: authViewModel.errorMessage!,
-                      onDismiss: () => authViewModel.clearError(),
+                    const SizedBox(height: 48),
+                    _LoginAndPassword(
+                      emailController: _emailController,
+                      passwordController: _passwordController,
                     ),
-                ],
-              ),
-            );
-          },
+                    const SizedBox(height: 48),
+
+                    // Google Sign In Button
+                    _GoogleSignInButton(
+                      onPressed: authViewModel.isLoading
+                          ? null
+                          : () => authViewModel.signInWithGoogle(),
+                      isLoading: authViewModel.isLoading,
+                    ),
+
+                    const SizedBox(height: 24),
+                    _ConfirmButton(
+                      onPressed: authViewModel.isLoading
+                          ? null
+                          : () {
+                              final email = _emailController.text;
+                              final password = _passwordController.text;
+                              authViewModel.signInWithEmailAndPassword(
+                                email,
+                                password,
+                              );
+                            },
+                    ),
+
+                    // Error Message
+                    if (authViewModel.hasError)
+                      _ErrorMessage(
+                        message: authViewModel.errorMessage!,
+                        onDismiss: () => authViewModel.clearError(),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -123,21 +144,28 @@ class _WelcomeText extends StatelessWidget {
 }
 
 class _LoginAndPassword extends StatelessWidget {
-  const _LoginAndPassword({super.key});
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+
+  const _LoginAndPassword({
+    super.key,
+    required this.emailController,
+    required this.passwordController,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         TextFieldWidget(
-          controller: TextEditingController(),
           hintText: 'Email',
           labelText: 'Email',
+          controller: emailController,
           prefixIcon: Icon(Icons.email),
         ),
         const SizedBox(height: 16),
         TextFieldWidget(
-          controller: TextEditingController(),
+          controller: passwordController,
           hintText: 'Password',
           labelText: 'Password',
           prefixIcon: Icon(Icons.lock),

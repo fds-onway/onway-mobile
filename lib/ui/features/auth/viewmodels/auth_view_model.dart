@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:onway/domain/entities/auth_user.dart';
+import 'package:result_dart/functions.dart';
+import 'package:result_dart/result_dart.dart';
 import '../../../../domain/repositories/auth_repository.dart';
 import '../state/auth_state.dart';
 
 /// ViewModel for authentication operations following MVVM pattern
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository;
-  StreamSubscription<dynamic>? _authStateSubscription;
+  StreamSubscription<AuthUser?>? _authStateSubscription;
 
   AuthState _state = const AuthState.initial();
   AuthState get state => _state;
@@ -52,12 +55,36 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   /// Sign in with Google
-  Future<void> signInWithGoogle() async {
-    if (_state.isLoading) return;
+  AsyncResult<Unit> signInWithGoogle() async {
+    if (_state.isLoading) return successOf(unit);
 
     _updateState(const AuthState.loading());
 
     final result = await _authRepository.signInWithGoogle();
+
+    return result.fold(
+      (user) {
+        _updateState(AuthState.authenticated(user));
+        debugPrint('User signed in: ${user.email}');
+        return successOf(unit);
+      },
+      (error) {
+        _updateState(AuthState.error(error.toString()));
+        debugPrint('Sign in error: ${error.toString()}');
+        return failureOf(error);
+      },
+    );
+  }
+
+  Future<void> signInWithEmailAndPassword(String email, String password) async {
+    if (_state.isLoading) return;
+
+    _updateState(const AuthState.loading());
+
+    final result = await _authRepository.signInWithEmailAndPassword(
+      email,
+      password,
+    );
 
     result.fold(
       (user) {

@@ -1,7 +1,9 @@
+import 'package:onway/domain/entities/email.dart';
+
 /// Domain entity representing an authenticated user
 class AuthUser {
   final String uid;
-  final String email;
+  final Email email;
   final String? displayName;
   final String? photoURL;
   final String provider;

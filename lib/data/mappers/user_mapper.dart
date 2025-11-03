@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../domain/auth/auth_user.dart';
+import 'package:onway/domain/entities/email.dart';
+import '../../domain/entities/auth_user.dart';
 
 /// Extension to convert Firebase User to domain AuthUser
 extension FirebaseUserMapper on User {
   AuthUser toDomainEntity() {
     return AuthUser(
       uid: uid,
-      email: email ?? '',
+      email: Email(email ?? ''),
       displayName: displayName,
       photoURL: photoURL,
       provider: providerData.isNotEmpty

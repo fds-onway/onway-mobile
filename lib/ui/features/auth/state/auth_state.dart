@@ -1,4 +1,4 @@
-import '../../../../domain/auth/auth_user.dart';
+import '../../../../domain/entities/auth_user.dart';
 
 /// Represents the different states of authentication
 enum AuthStatus {

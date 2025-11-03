@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:onway/data/services/api_service.dart';
+import 'package:onway/domain/entities/email.dart';
 import 'package:result_dart/functions.dart';
 import 'package:result_dart/result_dart.dart';
-import '../../domain/auth/auth_user.dart';
-import '../../domain/auth/auth_exceptions.dart';
+import '../../domain/entities/auth_user.dart';
+import '../../util/exceptions/auth_exceptions.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../services/auth_service.dart';
 import '../mappers/user_mapper.dart';
@@ -96,6 +97,26 @@ class AuthRepositoryImpl implements AuthRepository {
         return const GenericAuthException('User account has been disabled');
       default:
         return GenericAuthException(e.message ?? 'Authentication failed');
+    }
+  }
+
+  @override
+  Future<Result<AuthUser>> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      //simules a api call, TODO implement real api call
+      await Future.delayed(const Duration(seconds: 4));
+      return AuthUser(
+        uid: 'uid',
+        email: Email(email),
+        provider: 'onway',
+      ).toSuccess();
+    } catch (e) {
+      return failureOf(
+        GenericAuthException('Email/Password sign in failed: ${e.toString()}'),
+      );
     }
   }
 }
