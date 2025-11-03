@@ -1,19 +1,17 @@
 import 'package:result_dart/result_dart.dart';
+import '../auth/auth_user.dart';
 
-import '../auth/auth_success.dart';
-import '../auth/login_credentials.dart';
-import '../user.dart';
-
+/// Repository interface for authentication operations
 abstract class AuthRepository {
-  Future<Result<AuthSuccess, String>> login(LoginCredentials credentials);
+  /// Sign in with Google
+  Future<Result<AuthUser>> signInWithGoogle();
 
-  Future<void> logout();
+  /// Sign out the current user
+  Future<Result<Unit>> signOut();
 
-  Future<User?> getCurrentUser();
+  /// Get the currently authenticated user
+  Future<Result<AuthUser>> getCurrentUser();
 
-  Future<bool> isAuthenticated();
-
-  Future<void> saveAuthToken(String token);
-
-  Future<void> clearAuthData();
+  /// Stream of authentication state changes
+  Stream<AuthUser?> get authStateChanges;
 }
