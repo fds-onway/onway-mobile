@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:onway/ui/core/theme/app_theme.dart';
+import 'package:onway/ui/features/home/widgets/home_page.dart';
 import 'package:provider/provider.dart';
 import 'package:onway/config/firebase/firebase_options.dart';
 import 'config/providers/app_providers.dart';
@@ -30,10 +32,7 @@ class MainApp extends StatelessWidget {
       providers: AppProviders.allProviders,
       child: MaterialApp(
         title: 'OnWay',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
+        theme: appTheme,
         home: Consumer<AuthViewModel>(
           builder: (context, authViewModel, child) {
             if (authViewModel.isAuthenticated) {
@@ -44,64 +43,6 @@ class MainApp extends StatelessWidget {
           },
         ),
         debugShowCheckedModeBanner: false,
-      ),
-    );
-  }
-}
-
-/// Simple home screen
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('OnWay Home'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.read<AuthViewModel>().signOut();
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: Consumer<AuthViewModel>(
-        builder: (context, authViewModel, child) {
-          final user = authViewModel.state.user;
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (user?.photoURL != null)
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(user!.photoURL!),
-                  ),
-                const SizedBox(height: 16),
-                Text(
-                  'Welcome, ${user?.displayName ?? user?.email ?? 'User'}!',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  user?.email ?? '',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<AuthViewModel>().signOut();
-                  },
-                  child: const Text('Sign Out'),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

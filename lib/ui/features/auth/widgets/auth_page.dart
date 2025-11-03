@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:onway/ui/core/ui/text_field_widget.dart';
+import 'package:onway/util/extensions/build_context_extensions.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_view_model.dart';
 
@@ -19,14 +21,14 @@ class LoginPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // App Logo/Title
                   const _AppLogo(),
 
                   const SizedBox(height: 48),
 
-                  // Welcome Text
                   const _WelcomeText(),
 
+                  const SizedBox(height: 48),
+                  _LoginAndPassword(),
                   const SizedBox(height: 48),
 
                   // Google Sign In Button
@@ -38,6 +40,9 @@ class LoginPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
+                  _ConfirmButton(
+                    onPressed: () {},
+                  ),
 
                   // Error Message
                   if (authViewModel.hasError)
@@ -98,7 +103,7 @@ class _WelcomeText extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Welcome!',
+          'Bem vindo!',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -106,11 +111,37 @@ class _WelcomeText extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Sign in to continue your journey',
+          'Faça login para continuar sua jornada',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Colors.grey[600],
           ),
           textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginAndPassword extends StatelessWidget {
+  const _LoginAndPassword({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextFieldWidget(
+          controller: TextEditingController(),
+          hintText: 'Email',
+          labelText: 'Email',
+          prefixIcon: Icon(Icons.email),
+        ),
+        const SizedBox(height: 16),
+        TextFieldWidget(
+          controller: TextEditingController(),
+          hintText: 'Password',
+          labelText: 'Password',
+          prefixIcon: Icon(Icons.lock),
+          obscureText: true,
         ),
       ],
     );
@@ -169,7 +200,7 @@ class _GoogleSignInButton extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   const Text(
-                    'Continue with Google',
+                    'Continuar com o Google',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -177,6 +208,28 @@ class _GoogleSignInButton extends StatelessWidget {
                   ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _ConfirmButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const _ConfirmButton({super.key, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          'Acessar',
+          style: context.textTheme.titleMedium?.copyWith(
+            color: context.colorScheme.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
