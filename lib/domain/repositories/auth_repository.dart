@@ -1,3 +1,5 @@
+import 'package:onway/data/models/create_user_dto.dart';
+import 'package:onway/domain/entities/email.dart';
 import 'package:result_dart/result_dart.dart';
 import '../entities/auth_user.dart';
 
@@ -8,7 +10,11 @@ abstract class AuthRepository {
 
   Future<Result<AuthUser>> signInWithEmailAndPassword(
     String email,
-    String password,
+    Email password,
+  );
+
+  AsyncResult<Unit> createUserWithEmailAndPassword(
+    CreateUserDto dto,
   );
 
   /// Sign out the current user

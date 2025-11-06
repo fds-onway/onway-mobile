@@ -5,6 +5,7 @@ class AuthUser {
   final String uid;
   final Email email;
   final String? displayName;
+  final String? username;
   final String? photoURL;
   final String provider;
   final DateTime? createdAt;
@@ -13,6 +14,7 @@ class AuthUser {
     required this.uid,
     required this.email,
     this.displayName,
+    this.username,
     this.photoURL,
     required this.provider,
     this.createdAt,

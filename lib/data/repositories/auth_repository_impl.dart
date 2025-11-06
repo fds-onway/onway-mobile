@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:onway/data/services/api_service.dart';
+import 'package:onway/data/models/create_user_dto.dart';
+import 'package:onway/data/services/onway_api/api_service.dart';
 import 'package:onway/domain/entities/email.dart';
 import 'package:result_dart/functions.dart';
 import 'package:result_dart/result_dart.dart';
@@ -103,10 +104,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthUser>> signInWithEmailAndPassword(
     String email,
-    String password,
+    Email password,
   ) async {
     try {
-      //simules a api call, TODO implement real api call
       await Future.delayed(const Duration(seconds: 4));
       return AuthUser(
         uid: 'uid',
@@ -116,6 +116,39 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       return failureOf(
         GenericAuthException('Email/Password sign in failed: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  AsyncResult<Unit> createUserWithEmailAndPassword(
+    CreateUserDto dto,
+  ) async {
+    try {
+      var res = await _api.post(
+        path: 'user/register',
+        body: {
+          "name": dto.user,
+          "email": dto.email.value,
+          "password": dto.password,
+        },
+      );
+
+      if (res.isSuccess()) {
+        return successOf(unit);
+      }
+
+      var response = res.getOrThrow();
+      if (response.statusCode == 409) {
+        return failureOf(
+          GenericAuthException('The email address is already in use.'),
+        );
+      }
+
+      return failureOf(res.exceptionOrNull()!);
+    } on Exception catch (e) {
+      return failureOf(
+        GenericAuthException('Email/Password sign up failed: ${e.toString()}'),
       );
     }
   }

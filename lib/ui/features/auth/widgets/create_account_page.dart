@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:onway/domain/entities/email.dart';
 import 'package:onway/ui/core/ui/logo_widget.dart';
 import 'package:onway/ui/core/ui/text_field_widget.dart';
-import 'package:onway/ui/features/auth/widgets/create_account_page.dart';
 import 'package:onway/util/extensions/build_context_extensions.dart';
-import 'package:onway/util/navigation/util_navigation.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_view_model.dart';
 
 /// Login page widget following MVVM pattern
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class CreateAccountPage extends StatefulWidget {
+  const CreateAccountPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<CreateAccountPage> createState() => _CreateAccountPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _CreateAccountPageState extends State<CreateAccountPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Consumer<AuthViewModel>(
@@ -30,57 +33,41 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   children: [
+                    Text(
+                      'Cadastro de usuário',
+                      style: context.textTheme.headlineMedium?.copyWith(
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 48),
                     const _AppLogo(),
-
                     const SizedBox(height: 48),
-
-                    const SizedBox(height: 48),
-                    _LoginAndPassword(
-                      emailController: _emailController,
-                      passwordController: _passwordController,
+                    Form(
+                      key: _formKey,
+                      child: _CredentialsWidget(
+                        emailController: _emailController,
+                        passwordController: _passwordController,
+                        usernameController: _usernameController,
+                      ),
                     ),
                     const SizedBox(height: 48),
-
-                    // Google Sign In Button
-                    _GoogleSignInButton(
-                      onPressed: authViewModel.isLoading
-                          ? null
-                          : () => authViewModel.signInWithGoogle(),
-                      isLoading: authViewModel.isLoading,
-                    ),
 
                     const SizedBox(height: 24),
                     _ConfirmButton(
                       onPressed: authViewModel.isLoading
                           ? null
                           : () {
-                              final email = _emailController.text;
-                              final password = _passwordController.text;
-                              authViewModel.signInWithEmailAndPassword(
-                                email,
-                                password,
-                              );
+                              if (_formKey.currentState!.validate()) {
+                                authViewModel.createAccount(
+                                  username: _usernameController.text.trim(),
+                                  email: Email(_emailController.text.trim()),
+                                  password: _passwordController.text.trim(),
+                                );
+                              }
                             },
                     ),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _CreateAccountButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              UtilNavigation.nextPageFromLeft(
-                                page: const CreateAccountPage(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-
-                    // Error Message
                     if (authViewModel.hasError)
                       _ErrorMessage(
                         message: authViewModel.errorMessage!,
@@ -97,6 +84,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+/// App logo widget
 class _AppLogo extends StatelessWidget {
   const _AppLogo();
 
@@ -126,14 +114,16 @@ class _AppLogo extends StatelessWidget {
   }
 }
 
-class _LoginAndPassword extends StatelessWidget {
+class _CredentialsWidget extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
+  final TextEditingController usernameController;
 
-  const _LoginAndPassword({
+  const _CredentialsWidget({
     super.key,
     required this.emailController,
     required this.passwordController,
+    required this.usernameController,
   });
 
   @override
@@ -141,10 +131,32 @@ class _LoginAndPassword extends StatelessWidget {
     return Column(
       children: [
         TextFieldWidget(
+          controller: usernameController,
+          hintText: 'Usuário',
+          labelText: 'Usuário',
+          prefixIcon: Icon(Icons.person),
+          validator: (input) {
+            if (input == null || input.isEmpty) {
+              return 'Insura um nome de usuário.';
+            }
+            var lstr = input.trim().split(' ');
+
+            if (lstr.length < 2) {
+              return 'Insira pelo menos um nome e um sobrenome.';
+            }
+
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFieldWidget(
           hintText: 'Email',
           labelText: 'Email',
           controller: emailController,
           prefixIcon: Icon(Icons.email),
+          validator: Email.isValidEmail(emailController.text)
+              ? null
+              : (input) => 'Por favor, insira um email válido',
         ),
         const SizedBox(height: 16),
         TextFieldWidget(
@@ -153,73 +165,15 @@ class _LoginAndPassword extends StatelessWidget {
           labelText: 'Password',
           prefixIcon: Icon(Icons.lock),
           obscureText: true,
+
+          validator: (input) {
+            if ((input?.length ?? 0) < 8) {
+              return 'A senha deve ter pelo menos 8 caracteres.';
+            }
+            return null;
+          },
         ),
       ],
-    );
-  }
-}
-
-/// Google Sign In button widget
-class _GoogleSignInButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _GoogleSignInButton({
-    required this.onPressed,
-    required this.isLoading,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          elevation: 2,
-          shadowColor: Colors.black26,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Colors.grey, width: 0.5),
-          ),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/google_logo.png',
-                    height: 24,
-                    width: 24,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.g_mobiledata,
-                        size: 24,
-                        color: Colors.red,
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Continuar com o Google',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-      ),
     );
   }
 }
@@ -237,7 +191,7 @@ class _ConfirmButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            'Acessar',
+            'Confirmar',
             style: context.textTheme.titleMedium?.copyWith(
               color: context.colorScheme.onPrimary,
               fontWeight: FontWeight.w600,
@@ -245,34 +199,6 @@ class _ConfirmButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CreateAccountButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  const _CreateAccountButton({super.key, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          'Não tem uma conta?',
-          style: context.textTheme.labelMedium?.copyWith(
-            color: context.colorScheme.outlineVariant,
-          ),
-        ),
-        TextButton(
-          onPressed: onPressed,
-          child: Text(
-            'Cadastre-se',
-            style: context.textTheme.labelMedium?.copyWith(
-              color: context.colorScheme.primary,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

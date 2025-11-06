@@ -8,6 +8,8 @@ class TextFieldWidget extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final bool? obscureText;
+  final bool enableSuggestions;
+  final String? Function(String?)? validator;
   const TextFieldWidget({
     super.key,
     this.controller,
@@ -16,6 +18,8 @@ class TextFieldWidget extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.obscureText,
+    this.validator,
+    this.enableSuggestions = false,
   });
 
   @override
@@ -28,7 +32,8 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
     return TextFormField(
       controller: widget.controller,
       obscureText: widget.obscureText ?? false,
-
+      validator: widget.validator,
+      enableSuggestions: widget.enableSuggestions,
       decoration: InputDecoration(
         hintText: widget.hintText,
         labelText: widget.labelText,

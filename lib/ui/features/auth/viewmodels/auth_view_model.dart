@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:onway/data/models/create_user_dto.dart';
 import 'package:onway/domain/entities/auth_user.dart';
+import 'package:onway/domain/entities/email.dart';
 import 'package:result_dart/functions.dart';
 import 'package:result_dart/result_dart.dart';
 import '../../../../domain/repositories/auth_repository.dart';
@@ -83,7 +85,7 @@ class AuthViewModel extends ChangeNotifier {
 
     final result = await _authRepository.signInWithEmailAndPassword(
       email,
-      password,
+      Email(password),
     );
 
     result.fold(
@@ -94,6 +96,42 @@ class AuthViewModel extends ChangeNotifier {
       (error) {
         _updateState(AuthState.error(error.toString()));
         debugPrint('Sign in error: ${error.toString()}');
+      },
+    );
+  }
+
+  AsyncResult<Unit> createAccount({
+    required Email email,
+    required String password,
+    required String username,
+  }) async {
+    if (_state.isLoading) return successOf(unit);
+
+    _updateState(const AuthState.loading());
+
+    final result = await _authRepository.createUserWithEmailAndPassword(
+      CreateUserDto(user: username, email: email, password: password),
+    );
+
+    return result.fold(
+      (user) {
+        _updateState(
+          AuthState.authenticated(
+            AuthUser(
+              email: email,
+              uid: '',
+              provider: 'onway',
+              username: username,
+            ),
+          ),
+        );
+        debugPrint('Account created: $user');
+        return successOf(unit);
+      },
+      (error) {
+        _updateState(AuthState.error(error.toString()));
+        debugPrint('Account creation error: ${error.toString()}');
+        return failureOf(error);
       },
     );
   }
