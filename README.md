@@ -20,13 +20,19 @@ Para tratamento de erros, será utilizado o padrão Result, fazendo uso do packa
 Para facilitar o gerenciamento do estado, será utilizado o padrão Command: https://docs.flutter.dev/app-architecture/design-patterns/command
 Command basicamente será uma classe onde encapsulará os possíveis estados das ações tomadas pelo usuário (loading, error, sucess).
 
-
-# Geração de código
-
-Para armazenar os dados locais, faremos uso de um banco relacional SQLite através do ORM Drift: https://pub.dev/packages/drift
-Para que seja possível utilizá-lo, a geração de código é necessária. Sendo possível através do comando abaixo.
+# Iniciando o projeto
+1- Instalar o Flutter na versão 3.35.7 ou maior.
+2- ativar o modo desenvolvedor do seu sistema com 
+``` 
+  start ms-settings:developers
 ```
-dart run build_runner build --delete-conflicting-outputs
+3- instalar as dependencias com: 
+```
+  flutter pub get
+```
+4- Para armazenar os dados locais, faremos uso de um banco relacional SQLite através do ORM Drift, gerarando o codigo necessario com:
+``` 
+  dart run build_runner build --delete-conflicting-outputs   
 ```
 
 # Protótipo
