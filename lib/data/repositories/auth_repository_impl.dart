@@ -35,6 +35,16 @@ class AuthRepositoryImpl implements AuthRepository {
         body: {'idToken': idToken ?? ''},
       );
 
+      var response = resp.getOrThrow();
+
+      if (response.statusCode != 200) {
+        return failureOf(
+          GenericAuthException(
+            'Google sign in failed with status code: ${response.statusCode}',
+          ),
+        );
+      }
+
       final authUser = userCredential!.user!.toDomainEntity();
       return successOf(authUser);
     } on FirebaseAuthException catch (e) {
