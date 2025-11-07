@@ -42,22 +42,7 @@ class GoogleSignInService {
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
       final User? user = userCredential.user;
-      if (user != null) {
-        // final userDoc = FirebaseFirestore.instance
-        //     .collection('users')
-        //     .doc(user.uid);
-        // final docSnapshot = await userDoc.get();
-        // if (!docSnapshot.exists) {
-        //   await userDoc.set({
-        //     'uid': user.uid,
-        //     'name': user.displayName ?? '',
-        //     'email': user.email ?? '',
-        //     'photoURL': user.photoURL ?? '',
-        //     'provider': 'google',
-        //     'createdAt': FieldValue.serverTimestamp(),
-        //   });
-        // }
-      }
+
       return userCredential;
     } catch (e) {
       print('Error: $e');
