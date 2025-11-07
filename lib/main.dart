@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:onway/ui/core/theme/app_theme.dart';
-import 'package:onway/ui/features/home/widgets/home_page.dart';
+import 'package:onway/ui/features/home/widgets/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:onway/config/firebase/firebase_options.dart';
 import 'config/providers/app_providers.dart';

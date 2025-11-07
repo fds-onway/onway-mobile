@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 part 'drift_model.g.dart';
@@ -10,71 +9,56 @@ class UserDB extends Table {
   TextColumn get login => text()();
   TextColumn get password => text()();
   TextColumn get cnpj => text()();
-
   DateTimeColumn get dataAlteracao => dateTime()();
-
   @override
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [UserDB])
-class AppDatabase extends _$AppDatabase {
-  // After generating code, this class needs to define a `schemaVersion` getter
-  // and a constructor telling drift where the database should be stored.
-  // These are described in the getting started guide: https://drift.simonbinder.eu/getting-started/#open
-  //@Deprecated('Não use diretamente. Utilize através do getIt para manter somente uma instância (Singleton pattern)')
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+class RouteDB extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get description => text()();
+  TextColumn get tags => text()();
+  DateTimeColumn get dataCriacao => dateTime().withDefault(currentDateAndTime)();
+}
 
+class PointDB extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get routeId =>
+      integer().references(RouteDB, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text()();
+  TextColumn get type => text()();
+  TextColumn get description => text()();
+  TextColumn get latitude => text()();
+  TextColumn get longitude => text()();
+  DateTimeColumn get dataCriacao => dateTime().withDefault(currentDateAndTime)();
+}
+
+class ImageDB extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get routeId =>
+      integer().nullable().references(RouteDB, #id, onDelete: KeyAction.cascade)();
+  IntColumn get pointId =>
+      integer().nullable().references(PointDB, #id, onDelete: KeyAction.cascade)();
+  TextColumn get fileName => text()();
+  TextColumn get imageUrl => text()();
+}
+
+@DriftDatabase(tables: [UserDB, RouteDB, PointDB, ImageDB])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
   @override
   int get schemaVersion => 1;
-
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
       },
-      // onUpgrade: (m, from, to) async {
-      //   /// Run migration steps without foreign keys and re-enable them later
-      //   /// (https://drift.simonbinder.eu/docs/advanced-features/migrations/#tips)
-      //   await customStatement('PRAGMA foreign_keys = OFF');
-
-      //   /// [migrationSteps] method coming from db_migration.dart file
-      //   /// which drift generated
-      //   await transaction(
-      //     () => VersionedSchema.runMigrationSteps(
-      //       migrator: m,
-      //       from: from,
-      //       to: to,
-      //       steps: migrationSteps(
-      //         /// From version 1 to 2
-      //         from1To2: (Migrator m, Schema2 schema) async {
-      //           /// Write version 2 changes here
-      //           ///
-      //           /// Add new columns to [TaskTable]
-      //           await m.addColumn(schema.ocorrenciaDB, schema.ocorrenciaDB.motivoDescricao);
-      //         },
-      //         from2To3: (Migrator m, Schema3 schema) async {
-      //           await m.createTable(schema.emitenteGeolocalizacaoDB);
-      //         },
-      //         from3To4: (Migrator m, Schema4 schema) async {
-      //           await m.createTable(schema.loginLogDB);
-      //         },
-      //       ),
-      //     ),
-      //   );
-      // },
-      // beforeOpen: (details) async {
-      //   /// Enable foreign_keys
-      //   await customStatement('PRAGMA foreign_keys = ON');
-      // },
     );
   }
 
   static QueryExecutor _openConnection() {
-    // `driftDatabase` from `package:drift_flutter` stores the database in
-    // `getApplicationDocumentsDirectory()`.
-
     return driftDatabase(name: 'MultiAppDrift').interceptWith(LogInterceptor());
   }
 }
@@ -87,7 +71,6 @@ class LogInterceptor extends QueryInterceptor {
   ) async {
     final stopwatch = Stopwatch()..start();
     log(name: logName, 'Running $description');
-
     try {
       final result = await operation();
       log(
