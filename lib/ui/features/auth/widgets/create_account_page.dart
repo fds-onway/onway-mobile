@@ -4,6 +4,7 @@ import 'package:onway/ui/core/ui/logo_widget.dart';
 import 'package:onway/ui/core/ui/text_field_widget.dart';
 import 'package:onway/util/extensions/build_context_extensions.dart';
 import 'package:provider/provider.dart';
+import 'package:result_dart/result_dart.dart';
 import '../viewmodels/auth_view_model.dart';
 
 /// Login page widget following MVVM pattern
@@ -57,15 +58,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     _ConfirmButton(
                       onPressed: authViewModel.isLoading
                           ? null
-                          : () {
-                              if (_formKey.currentState!.validate()) {
-                                authViewModel.createAccount(
-                                  username: _usernameController.text.trim(),
-                                  email: Email(_emailController.text.trim()),
-                                  password: _passwordController.text.trim(),
-                                );
-                              }
-                            },
+                          : () => handleCreateAccountTap(authViewModel),
                     ),
 
                     if (authViewModel.hasError)
@@ -81,6 +74,27 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         ),
       ),
     );
+  }
+
+  void handleCreateAccountTap(AuthViewModel viewModel) async {
+    if (_formKey.currentState!.validate()) {
+      var res = await viewModel.createAccount(
+        username: _usernameController.text.trim(),
+        email: Email(_emailController.text.trim()),
+        password: _passwordController.text.trim(),
+      );
+      if (!mounted) return;
+      if (res.isSuccess()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Conta criada com sucesso. Verifique seu e-mail e realize o login em seguida!',
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    }
   }
 }
 
@@ -114,7 +128,7 @@ class _AppLogo extends StatelessWidget {
   }
 }
 
-class _CredentialsWidget extends StatelessWidget {
+class _CredentialsWidget extends StatefulWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController usernameController;
@@ -127,11 +141,17 @@ class _CredentialsWidget extends StatelessWidget {
   });
 
   @override
+  State<_CredentialsWidget> createState() => _CredentialsWidgetState();
+}
+
+class _CredentialsWidgetState extends State<_CredentialsWidget> {
+  bool _obscurePassword = true;
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         TextFieldWidget(
-          controller: usernameController,
+          controller: widget.usernameController,
           hintText: 'Usuário',
           labelText: 'Usuário',
           prefixIcon: Icon(Icons.person),
@@ -152,19 +172,35 @@ class _CredentialsWidget extends StatelessWidget {
         TextFieldWidget(
           hintText: 'Email',
           labelText: 'Email',
-          controller: emailController,
+          controller: widget.emailController,
           prefixIcon: Icon(Icons.email),
-          validator: Email.isValidEmail(emailController.text)
-              ? null
-              : (input) => 'Por favor, insira um email válido',
+          validator: (input) {
+            if (input == null || input.isEmpty) {
+              return 'Insira um email válido.';
+            }
+            if (!Email.isValidEmail(input.trim())) {
+              return 'Insira um email válido.';
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         TextFieldWidget(
-          controller: passwordController,
+          controller: widget.passwordController,
           hintText: 'Password',
           labelText: 'Password',
           prefixIcon: Icon(Icons.lock),
-          obscureText: true,
+          obscureText: _obscurePassword,
+          suffixIcon: IconButton(
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+            icon: Icon(
+              _obscurePassword ? Icons.visibility : Icons.visibility_off,
+            ),
+          ),
 
           validator: (input) {
             if ((input?.length ?? 0) < 8) {

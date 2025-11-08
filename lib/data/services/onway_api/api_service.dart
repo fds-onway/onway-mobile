@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:onway/data/models/acess_token_dto.dart';
 import 'package:onway/util/exceptions/app_exception.dart';
 import 'package:result_dart/functions.dart';
 import 'package:result_dart/result_dart.dart';
@@ -37,6 +38,7 @@ class ApiService {
   }
 
   AsyncResult<http.Response> post({
+    AcessTokenDto? acessToken,
     required String path,
     Map<String, String>? body,
   }) async {
@@ -52,6 +54,14 @@ class ApiService {
     } catch (e) {
       return failureOf(Exception('Unexpected error: $e'));
     }
+  }
+
+  void authorize(AcessTokenDto acessToken) {
+    _baseHeader['Authorization'] = 'Bearer ${acessToken.accessToken}';
+  }
+
+  void unauthorize() {
+    _baseHeader.remove('Authorization');
   }
 }
 

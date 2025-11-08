@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart';
+import 'package:onway/data/models/acess_token_dto.dart';
 import 'package:onway/data/models/create_user_dto.dart';
 import 'package:onway/data/services/onway_api/api_service.dart';
 import 'package:onway/domain/entities/email.dart';
@@ -10,10 +14,11 @@ import '../../domain/repositories/auth_repository.dart';
 import '../services/auth_service.dart';
 import '../mappers/user_mapper.dart';
 
-/// Implementation of AuthRepository using Firebase and Google Sign-In
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final ApiService _api = ApiService();
+
+  AcessTokenDto? _acessToken;
 
   AuthRepositoryImpl({FirebaseAuth? firebaseAuth})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
@@ -37,13 +42,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
       var response = resp.getOrThrow();
 
-      if (response.statusCode != 200) {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
         return failureOf(
           GenericAuthException(
-            'Google sign in failed with status code: ${response.statusCode}',
+            getAuthErrorMessage(response).toString(),
           ),
         );
       }
+
+      _acessToken = AcessTokenDto.fromJson(jsonDecode(response.body));
+      _api.authorize(_acessToken!);
 
       final authUser = userCredential!.user!.toDomainEntity();
       return successOf(authUser);
@@ -60,6 +68,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<Unit>> signOut() async {
     try {
       await GoogleSignInService.signOut();
+      _api.unauthorize();
       return successOf(unit);
     } catch (e) {
       return failureOf(
@@ -69,7 +78,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<AuthUser>> getCurrentUser() async {
+  Future<Result<AuthUser>> getCurrentGoogleUser() async {
     try {
       final user = GoogleSignInService.getCurrentUser();
 
@@ -94,7 +103,6 @@ class AuthRepositoryImpl implements AuthRepository {
     });
   }
 
-  /// Maps Firebase Auth exceptions to domain exceptions
   AuthException _mapFirebaseException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -117,7 +125,27 @@ class AuthRepositoryImpl implements AuthRepository {
     Email password,
   ) async {
     try {
-      await Future.delayed(const Duration(seconds: 4));
+      var apiResult = await _api.post(
+        path: 'auth/user',
+        body: {
+          'email': email,
+          'password': password.value,
+        },
+      );
+
+      var response = apiResult.getOrThrow();
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return failureOf(
+          GenericAuthException(
+            getAuthErrorMessage(response).toString(),
+          ),
+        );
+      }
+
+      _acessToken = AcessTokenDto.fromJson(jsonDecode(response.body));
+      _api.authorize(_acessToken!);
+
       return AuthUser(
         uid: 'uid',
         email: Email(email),
@@ -144,10 +172,6 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
 
-      if (res.isSuccess()) {
-        return successOf(unit);
-      }
-
       var response = res.getOrThrow();
       if (response.statusCode == 409) {
         return failureOf(
@@ -155,11 +179,54 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return failureOf(res.exceptionOrNull()!);
+      if (response.statusCode == 400) {
+        final StringBuffer bufferMessage = StringBuffer();
+        var body = jsonDecode(response.body);
+
+        for (var i in body['message']) {
+          bufferMessage.writeln('$i');
+        }
+
+        return failureOf(
+          GenericAuthException(
+            bufferMessage.toString(),
+          ),
+        );
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return failureOf(
+          GenericAuthException(
+            'Sign up failed with status code: ${response.statusCode}',
+          ),
+        );
+      }
+
+      return successOf(unit);
     } on Exception catch (e) {
       return failureOf(
         GenericAuthException('Email/Password sign up failed: ${e.toString()}'),
       );
     }
   }
+
+  StringBuffer getAuthErrorMessage(Response response) {
+    final StringBuffer buffer = StringBuffer();
+
+    if (response.statusCode == 401) {
+      var jsonBody = jsonDecode(response.body);
+      buffer.writeln(jsonBody['message'] ?? 'Erro desconhecido.');
+    } else {
+      buffer.writeln('Erro desconhecido.');
+    }
+
+    return buffer;
+  }
+
+  @override
+  AsyncResult<AcessTokenDto> get acessToken async => _acessToken != null
+      ? successOf(_acessToken!)
+      : failureOf(
+          GenericAuthException('No access token available'),
+        );
 }

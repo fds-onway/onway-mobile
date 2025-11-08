@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:onway/data/models/create_user_dto.dart';
 import 'package:onway/domain/entities/auth_user.dart';
 import 'package:onway/domain/entities/email.dart';
+import 'package:onway/util/exceptions/app_exception.dart';
+import 'package:onway/util/exceptions/auth_exceptions.dart';
 import 'package:result_dart/functions.dart';
 import 'package:result_dart/result_dart.dart';
 import '../../../../domain/repositories/auth_repository.dart';
@@ -48,7 +50,7 @@ class AuthViewModel extends ChangeNotifier {
 
   /// Check if there's a currently authenticated user
   Future<void> _checkCurrentUser() async {
-    final result = await _authRepository.getCurrentUser();
+    final result = await _authRepository.getCurrentGoogleUser();
 
     result.fold(
       (user) => _updateState(AuthState.authenticated(user)),
@@ -94,8 +96,12 @@ class AuthViewModel extends ChangeNotifier {
         debugPrint('User signed in: ${user.email}');
       },
       (error) {
-        _updateState(AuthState.error(error.toString()));
-        debugPrint('Sign in error: ${error.toString()}');
+        if (error is AuthException) {
+          _updateState(AuthState.error(error.message));
+        } else {
+          _updateState(AuthState.error(error.toString()));
+          debugPrint('Sign in error: ${error.toString()}');
+        }
       },
     );
   }
@@ -129,7 +135,12 @@ class AuthViewModel extends ChangeNotifier {
         return successOf(unit);
       },
       (error) {
-        _updateState(AuthState.error(error.toString()));
+        if (error is AuthException) {
+          _updateState(AuthState.error(error.message));
+        } else {
+          _updateState(AuthState.error(error.toString()));
+        }
+
         debugPrint('Account creation error: ${error.toString()}');
         return failureOf(error);
       },
