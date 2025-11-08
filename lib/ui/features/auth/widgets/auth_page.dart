@@ -18,6 +18,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool obscurePassword = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,6 +41,12 @@ class _LoginPageState extends State<LoginPage> {
                     _LoginAndPassword(
                       emailController: _emailController,
                       passwordController: _passwordController,
+                      obscureText: obscurePassword,
+                      onToggleObscure: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
                     ),
                     const SizedBox(height: 48),
 
@@ -80,7 +88,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    // Error Message
                     if (authViewModel.hasError)
                       _ErrorMessage(
                         message: authViewModel.errorMessage!,
@@ -129,11 +136,15 @@ class _AppLogo extends StatelessWidget {
 class _LoginAndPassword extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
+  final bool obscureText;
+  final Function()? onToggleObscure;
 
   const _LoginAndPassword({
     super.key,
     required this.emailController,
     required this.passwordController,
+    required this.obscureText,
+    this.onToggleObscure,
   });
 
   @override
@@ -152,7 +163,13 @@ class _LoginAndPassword extends StatelessWidget {
           hintText: 'Password',
           labelText: 'Password',
           prefixIcon: Icon(Icons.lock),
-          obscureText: true,
+          obscureText: obscureText,
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscureText ? Icons.visibility_off : Icons.visibility,
+            ),
+            onPressed: onToggleObscure,
+          ),
         ),
       ],
     );
@@ -297,13 +314,14 @@ class _ErrorMessage extends StatelessWidget {
         border: Border.all(color: Colors.red[200]!),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
             Icons.error_outline,
             color: Colors.red[700],
             size: 20,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 4),
           Expanded(
             child: Text(
               message,
@@ -311,6 +329,7 @@ class _ErrorMessage extends StatelessWidget {
                 color: Colors.red[700],
                 fontSize: 14,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           IconButton(
@@ -320,7 +339,7 @@ class _ErrorMessage extends StatelessWidget {
               color: Colors.red[700],
               size: 20,
             ),
-            constraints: const BoxConstraints(),
+            //constraints: const BoxConstraints(),
             padding: EdgeInsets.zero,
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:onway/data/models/acess_token_dto.dart';
 import 'package:onway/data/models/create_user_dto.dart';
 import 'package:onway/domain/entities/email.dart';
 import 'package:result_dart/result_dart.dart';
@@ -21,7 +22,9 @@ abstract class AuthRepository {
   Future<Result<Unit>> signOut();
 
   /// Get the currently authenticated user
-  Future<Result<AuthUser>> getCurrentUser();
+  Future<Result<AuthUser>> getCurrentGoogleUser();
+
+  AsyncResult<AcessTokenDto> get acessToken;
 
   /// Stream of authentication state changes
   Stream<AuthUser?> get authStateChanges;
