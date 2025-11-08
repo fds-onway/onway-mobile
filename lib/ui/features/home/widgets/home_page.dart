@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:onway/ui/features/profile/profile_page.dart';
+import 'package:onway/util/navigation/util_navigation.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +38,15 @@ class HomeScreen extends StatelessWidget {
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Pesquise aqui...',
-                          hintStyle:
-                              TextStyle(color: Colors.grey[500], fontSize: 16),
+                          hintStyle: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 16,
+                          ),
                           border: InputBorder.none,
-                          prefixIcon:
-                              const Icon(Icons.search, color: Colors.grey),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 14,
@@ -71,13 +77,15 @@ class HomeScreen extends StatelessWidget {
                     _TravelCard(
                       title: 'Caminho de Santiago',
                       rating: 4.5,
-                      imageUrl: 'https://www.elcaminoconcorreos.com/imagenes-blog/352/km-camino-santiago.jpg',
+                      imageUrl:
+                          'https://www.elcaminoconcorreos.com/imagenes-blog/352/km-camino-santiago.jpg',
                     ),
                     SizedBox(height: 16),
                     _TravelCard(
                       title: 'O que fazer no Paraná?',
                       rating: 3.5,
-                      imageUrl:'https://media.istockphoto.com/id/1372346536/pt/foto/curitiba.jpg?s=2048x2048&w=is&k=20&c=2tk7HV6d6ZzpEAn-oVFXfECobRL3v4URvGR1CjCBDIo=',
+                      imageUrl:
+                          'https://media.istockphoto.com/id/1372346536/pt/foto/curitiba.jpg?s=2048x2048&w=is&k=20&c=2tk7HV6d6ZzpEAn-oVFXfECobRL3v4URvGR1CjCBDIo=',
                     ),
                   ],
                 ),
@@ -102,6 +110,14 @@ class HomeScreen extends StatelessWidget {
           unselectedItemColor: Colors.white70,
           showSelectedLabels: false,
           showUnselectedLabels: false,
+          onTap: (index) {
+            if (index == 2) {
+              Navigator.push(
+                context,
+                UtilNavigation.nextPageFromBottom(page: ProfilePage()),
+              );
+            }
+          },
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.settings),
@@ -164,7 +180,7 @@ class _TravelCard extends StatelessWidget {
             height: 150,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.transparent , Colors.transparent],
+                colors: [Colors.transparent, Colors.transparent],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
               ),
@@ -199,8 +215,10 @@ class _TravelCard extends StatelessWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF5BBF7F),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
