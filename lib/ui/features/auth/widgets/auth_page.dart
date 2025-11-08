@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:onway/ui/core/ui/logo_widget.dart';
 import 'package:onway/ui/core/ui/text_field_widget.dart';
 import 'package:onway/ui/features/auth/widgets/create_account_page.dart';
+import 'package:onway/ui/features/home/widgets/home_page.dart';
 import 'package:onway/util/extensions/build_context_extensions.dart';
 import 'package:onway/util/navigation/util_navigation.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +55,19 @@ class _LoginPageState extends State<LoginPage> {
                     _GoogleSignInButton(
                       onPressed: authViewModel.isLoading
                           ? null
-                          : () => authViewModel.signInWithGoogle(),
+                          : () async {
+                              var result = await authViewModel
+                                  .signInWithGoogle();
+                              if (!context.mounted) return;
+                              if (result.isSuccess()) {
+                                Navigator.push(
+                                  context,
+                                  UtilNavigation.nextPageFromRight(
+                                    page: const HomePage(),
+                                  ),
+                                );
+                              }
+                            },
                       isLoading: authViewModel.isLoading,
                     ),
 
