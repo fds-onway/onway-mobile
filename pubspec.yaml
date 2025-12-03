@@ -21,6 +21,9 @@ dependencies:
   provider: ^6.1.5+1
   result_command: ^2.2.0
   email_validator: ^3.0.0
+  osrm: ^0.0.8
+  latlong2: ^0.9.1
+  flutter_map: ^8.2.2
 
 dev_dependencies:
   flutter_test:
