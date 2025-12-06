@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:onway/ui/features/home/viewmodels/home_view_model.dart';
 import 'package:onway/ui/features/profile/profile_page.dart';
 import 'package:onway/util/navigation/util_navigation.dart';
+import 'package:provider/provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch routes when the page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeViewModel>().fetchRoutes();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,25 +86,94 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: const [
-                    _TravelCard(
-                      title: 'Caminho de Santiago',
-                      rating: 4.5,
-                      imageUrl:
-                          'https://www.elcaminoconcorreos.com/imagenes-blog/352/km-camino-santiago.jpg',
+              // Routes List
+              Consumer<HomeViewModel>(
+                builder: (context, viewModel, child) {
+                  if (viewModel.state.isLoading) {
+                    return const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF5BBF7F),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (viewModel.state.error != null) {
+                    return Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Erro ao carregar rotas',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            viewModel.state.error!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF5BBF7F),
+                            ),
+                            onPressed: () => viewModel.retry(),
+                            child: const Text('Tentar novamente'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (viewModel.state.routes.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'Nenhuma rota disponível',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: viewModel.state.routes.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final route = viewModel.state.routes[index];
+                        return _RouteCard(
+                          title: route.name,
+                          description: route.description,
+                          tags: route.tags,
+                          imageUrl: route.image,
+                        );
+                      },
                     ),
-                    SizedBox(height: 16),
-                    _TravelCard(
-                      title: 'O que fazer no Paraná?',
-                      rating: 3.5,
-                      imageUrl:
-                          'https://media.istockphoto.com/id/1372346536/pt/foto/curitiba.jpg?s=2048x2048&w=is&k=20&c=2tk7HV6d6ZzpEAn-oVFXfECobRL3v4URvGR1CjCBDIo=',
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 100),
             ],
@@ -153,78 +238,152 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _TravelCard extends StatelessWidget {
+class _RouteCard extends StatelessWidget {
   final String title;
-  final double rating;
+  final String description;
+  final List<String> tags;
   final String imageUrl;
 
-  const _TravelCard({
+  const _RouteCard({
     required this.title,
-    required this.rating,
+    required this.description,
+    required this.tags,
     required this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.network(
-            imageUrl,
-            height: 150,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-          Container(
-            height: 150,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.transparent],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
+          // Image
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+            child: Image.network(
+              imageUrl,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 180,
+                  color: Colors.grey[300],
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                );
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 180,
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: const Color(0xFF5BBF7F),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          Positioned(
-            left: 16,
-            bottom: 36,
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(color: Colors.black54, blurRadius: 6),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            bottom: 12,
-            child: Text(
-              'Avaliação: ${rating.toStringAsFixed(1)}/5',
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ),
-          Positioned(
-            right: 16,
-            bottom: 12,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5BBF7F),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 8),
+
+                // Description
+                Text(
+                  description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              onPressed: () {},
-              child: const Text('Ver mais'),
+                const SizedBox(height: 12),
+
+                // Tags
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: tags.map((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5BBF7F).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF5BBF7F).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2E8B57),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+
+                // Action Button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5BBF7F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      // TODO: Navigate to route details
+                    },
+                    child: const Text('Ver detalhes'),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
